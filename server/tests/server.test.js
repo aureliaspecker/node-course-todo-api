@@ -1,13 +1,16 @@
 // mocha (like nodemon) don't need to be required
 const expect = require('expect');
 const request = require('supertest');
+const {ObjectID} = require('mongodb');
 
 const {app} = require('./../server');
 const {Todo} = require ('./../models/todo');
 
 const todos = [{
-    text: 'Something to do '
+    _id: new ObjectID(),
+    text: 'Something to do'
 }, {
+    _id: new ObjectID(),
     text:'Something else to do'
 }];
 
@@ -67,7 +70,33 @@ describe('POST /todos', () => {
                 expect(res.body.todos.length).toBe(2);
             })
             .end(done); // no need to use a .end() function like we use above, because we're not doing anything asynchronous here
-        })
-    })
+        });
+    });
+
+    describe('GET /todos/:id', () => {
+        it('should return todo doc', (done) => {
+            request(app)
+                .get(`/todos/${todos[0]._id.toHexString()}`)
+                .expect(200)
+                .expect((res) => {
+                    expect(res.body.todo.text).toBe(todos[0].text);
+                })
+                .end(done);
+        });
+    });
+
+    it('should return a 404 if todo not found', (done) => {
+        request(app)
+            .get(`/todos/${new ObjectID().toHexString()}`)
+            .expect(404)
+            .end(done);
+    });
+
+    it('should return a 404 for non-object ids', (done) => {
+        request(app)
+            .get('/todos/123')
+            .expect(404)
+            .end(done);
+    });
 
 });
