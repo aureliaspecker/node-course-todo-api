@@ -8,10 +8,12 @@ const {Todo} = require ('./../models/todo');
 
 const todos = [{
     _id: new ObjectID(),
-    text: 'Something to do'
+    text: 'First item to do'
 }, {
     _id: new ObjectID(),
-    text:'Something else to do'
+    text:'Second item to do', 
+    completed: true,
+    completeAt: 333
 }];
 
 beforeEach((done) => {
@@ -103,7 +105,7 @@ describe('POST /todos', () => {
 
 describe('DELETE /todos/:id', () => {
     it('should remove a todo', (done) => {
-        var hexId = todos [1]._id.toHexString();
+        var hexId = todos[1]._id.toHexString();
 
         request(app)
             .delete(`/todos/${hexId}`)
@@ -138,4 +140,47 @@ describe('DELETE /todos/:id', () => {
         .end(done);
     });
 
+});
+
+describe('PATCH /todos/:id', () => {
+    it('should update the todo', (done) => {
+        var hexId = todos[0]._id.toHexString();
+        var text = 'Testing new text';
+        
+        request(app)
+            .patch(`/todos/${hexId}`)
+            .send({
+                completed: true,
+                text
+            })
+            .expect(200)
+            .expect((res) => {
+                console.log(res.body)
+                expect(res.body.todo.text).toBe(text);
+                expect(res.body.todo.completed).toBe(true);
+                // expect(res.body.todo.completedAt).toBeA('number');
+            })
+            .end(done);
+
+            });
+
+    it ('should clear completedAt when todo is not completed', (done) => {
+        var hexId = todos[1]._id.toHexString();
+        var text = 'Testing a different text';
+        
+        request(app)
+            .patch(`/todos/${hexId}`)
+            .send({
+                completed: false,
+                text
+            })
+            .expect(200)
+            .expect((res) => {
+                expect(res.body.todo.text).toBe(text);
+                expect(res.body.todo.completed).toBe(false);
+                expect(res.body.todo.completedAt).toBeFalsy();
+            })
+            .end(done);
+
+    });
 });
